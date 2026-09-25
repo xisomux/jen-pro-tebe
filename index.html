@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jen pro tebe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 120, 166, 0.4), transparent 30%),
+                  radial-gradient(circle at 80% 80%, rgba(168, 80, 255, 0.45), transparent 30%),
+                  linear-gradient(135deg, #180b25, #4b123d, #190b2d);
+      color: white;
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hearts span {
+      position: absolute;
+      bottom: -50px;
+      font-size: 26px;
+      animation: float 8s linear infinite;
+      opacity: 0.8;
+    }
+
+    .hearts span:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .hearts span:nth-child(2) { left: 30%; animation-delay: 2s; }
+    .hearts span:nth-child(3) { left: 50%; animation-delay: 4s; }
+    .hearts span:nth-child(4) { left: 70%; animation-delay: 1s; }
+    .hearts span:nth-child(5) { left: 90%; animation-delay: 3s; }
+
+    @keyframes float {
+      from { transform: translateY(0) rotate(0deg); }
+      to { transform: translateY(-115vh) rotate(360deg); }
+    }
+
+    .card {
+      width: min(90%, 620px);
+      padding: 42px 28px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 30px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 2;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-out {
+      opacity: 0 !important;
+      transform: scale(0.9) translateY(-20px) !important;
+      pointer-events: none;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.8s forwards ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .heart { font-size: 62px; animation: beat 1.2s infinite; }
+    @keyframes beat { 50% { transform: scale(1.18); } }
+
+    h1 {
+      font-size: clamp(34px, 8vw, 58px);
+      margin: 10px 0;
+      line-height: 1.1;
+    }
+
+    p {
+      line-height: 1.7;
+      margin: 12px 0;
+    }
+
+    input {
+      width: 100%;
+      max-width: 310px;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 17px;
+      outline: none;
+      margin: 12px 0;
+      background: rgba(255,255,255,0.95);
+      color: #3a0d32;
+    }
+
+    button {
+      border: 0;
+      padding: 14px 26px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #4b123d;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: scale(1.06);
+    }
+
+    #error {
+      color: #ffd1e1;
+      min-height: 24px;
+      margin-top: 10px;
+    }
+
+    #intermission {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 500;
+      text-align: center;
+      max-width: 85%;
+      z-index: 5;
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1em;
+      background-color: white;
+      margin-left: 4px;
+      animation: blink 0.7s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    #page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(24, 11, 37, 0.6);
+      backdrop-filter: blur(20px);
+      padding: 40px 20px;
+      overflow-y: auto;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .page-container {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .boxes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 450px;
+      margin-top: 30px;
+    }
+
+    .square-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 22px;
+      aspect-ratio: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 38px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s ease, background 0.3s ease;
+      user-select: none;
+    }
+
+    .square-box:hover {
+      transform: scale(1.12) rotate(0deg) !important;
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .box-top    { grid-column: 2; grid-row: 1; transform: rotate(-6deg); }
+    .box-left   { grid-column: 1; grid-row: 2; transform: rotate(8deg); }
+    .box-center { grid-column: 2; grid-row: 2; transform: rotate(-3deg) scale(1.05); background: rgba(255,255,255,0.2); }
+    .box-right  { grid-column: 3; grid-row: 2; transform: rotate(-7deg); }
+    .box-bottom { grid-column: 2; grid-row: 3; transform: rotate(5deg); }
+
+    /* Detail pages */
+    .detail-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      overflow-y: auto;
+      color: #8b264e;
+      padding: 20px 15px 90px 15px;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    #detail-page-1 {
+      background: #ffdeeb;
+      background-image: radial-gradient(#ffb6d3 15%, transparent 16%), radial-gradient(#ffc2db 15%, transparent 16%);
+      background-size: 60px 60px;
+      background-position: 0 0, 30px 30px;
+    }
+
+    .detail-page-content {
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .detail-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(26px, 5vw, 42px);
+      text-align: center;
+      margin: 10px 0 20px 0;
+      color: #8b264e;
+    }
+
+    .scrapbook-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      margin-top: 15px;
+      align-items: center;
+    }
+
+    .photo-wrapper {
+      position: relative;
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .photo-wrapper:hover {
+      transform: scale(1.05) rotate(0deg) !important;
+      z-index: 10;
+    }
+
+    .pos-top-left     { grid-column: 1; grid-row: 1; transform: rotate(-3deg); }
+    .pos-top-right    { grid-column: 3; grid-row: 1; transform: rotate(3deg); }
+    .pos-center       { grid-column: 2; grid-row: 2; transform: rotate(-1deg); z-index: 2; }
+    .pos-bottom-left  { grid-column: 1; grid-row: 3; transform: rotate(2deg); }
+    .pos-bottom-right { grid-column: 3; grid-row: 3; transform: rotate(-3deg); }
+
+    .photo-frame-clean, .photo-frame-center {
+      position: relative;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .photo-frame-clean {
+      height: 220px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 25px rgba(139, 38, 78, 0.2);
+      background: #fff;
+    }
+
+    .photo-frame-center {
+      height: 230px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 6px solid #fff;
+      box-shadow: 0 15px 30px rgba(139, 38, 78, 0.3);
+      background: #fff;
+    }
+
+    .photo-frame-clean img, .photo-frame-center img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: blur(12px) saturate(0.8);
+      transform: scale(1.08);
+      transition: filter 0.6s ease, transform 0.6s ease;
+    }
+
+    .photo-frame-center img { object-position: center 15%; }
+
+    .blur-box.revealed img {
+      filter: blur(0px) !important;
+      transform: scale(1) !important;
+    }
+
+    .blur-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(139, 38, 78, 0.12);
+      font-size: 28px;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .blur-box.revealed .blur-overlay {
+      opacity: 0;
+    }
+
+    .custom-left-text {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #8b264e;
+      line-height: 1.4;
+      text-align: left;
+      margin-right: 12px;
+      min-width: 130px;
+      max-width: 150px;
+    }
+
+    .back-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff4081;
+      color: white;
+      border: none;
+      padding: 12px 35px;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
+      cursor: pointer;
+      z-index: 40;
+    }
+
+    .detail-card {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 28px;
+      padding: 28px 20px;
+      max-width: 700px;
+      width: min(90vw, 700px);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+    }
+
+    .detail-card h2 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 44px);
+      color: white;
+    }
+
+    .detail-card p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.95);
+      margin: 10px 0;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+      width: 100%;
+    }
+
+    .mini-item {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 18px 16px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Colors per detail page */
+    #detail-page-2 { background: linear-gradient(135deg, #33217a, #5a2f8d, #2a173d); }
+    #detail-page-3 { background: linear-gradient(135deg, #0b3b46, #1e7d8d, #0e2233); }
+    #detail-page-4 { background: linear-gradient(135deg, #5a1b46, #a12e5d, #2a1128); }
+    #detail-page-5 { background: linear-gradient(135deg, #1a3f2e, #2d7b6a, #15372a); }
+
+    @media (max-width: 700px) {
+      .scrapbook-grid {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .photo-wrapper {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .custom-left-text {
+        margin-right: 0;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hearts">
+    <span>❤️</span>
+    <span>💕</span>
+    <span>💗</span>
+    <span>💖</span>
+    <span>❤️</span>
+  </div>
+
+  <div class="card" id="login">
+    <div class="heart">🔒❤️</div>
+    <h1>Jen pro tebe</h1>
+    <p>Až odbije 12. hodina a bude 9.11., tak mě můžeš otevřít 💕</p>
+    <input id="password" type="password" placeholder="Zadej heslo" />
+    <br />
+    <button onclick="unlock()">Odemknout</button>
+    <div id="error"></div>
+  </div>
+
+  <div id="intermission">
+    <span id="typed-text"></span><span class="typing-cursor"></span>
+  </div>
+
+  <div id="page">
+    <div class="page-container">
+      <div class="heart">❤️</div>
+      <h1>Tak kam to bude?</h1>
+
+      <div class="boxes-grid">
+        <div class="square-box box-top" onclick="openBox(1)">?</div>
+        <div class="square-box box-left" onclick="openBox(2)">?</div>
+        <div class="square-box box-center" onclick="openBox(3)">?</div>
+        <div class="square-box box-right" onclick="openBox(4)">?</div>
+        <div class="square-box box-bottom" onclick="openBox(5)">?</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detail-page-1" class="detail-page">
+    <div class="detail-page-content">
+      <h1 class="detail-title">Dobře, dobrých společných fotek moc nemáme, ale to neva. 💕</h1>
+
+      <div class="scrapbook-grid">
+        <div class="photo-wrapper pos-top-left">
+          <div class="custom-left-text">Další měsíc, další důvod, proč jsem za tebe vděčný.</div>
+          <div class="photo-frame-clean blur-box" onclick="revealPhoto(this)">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" alt="Fotka 1">
+            <div class="blur-overlay">🔒</div>
+          </div>
+        </div>
+
+        <div class="photo-wrapper pos-top-right">
+          <div class="photo-frame-clean blur-box" onclick="revealPhoto(this)">
+            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80" alt="Fotka 2">
+            <div class="blur-overlay">🔒</div>
+          </div>
+        </div>
+
+        <div class="photo-wrapper pos-center">
+          <div class="photo-frame-center blur-box" onclick="revealPhoto(this)">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80" alt="Fotka 5">
+            <div class="blur-overlay">🔒</div>
+          </div>
+        </div>
+
+        <div class="photo-wrapper pos-bottom-left">
+          <div class="photo-frame-clean blur-box" onclick="revealPhoto(this)">
+            <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80" alt="Fotka 3">
+            <div class="blur-overlay">🔒</div>
+          </div>
+        </div>
+
+        <div class="photo-wrapper pos-bottom-right">
+          <div class="photo-frame-clean blur-box" onclick="revealPhoto(this)">
+            <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=900&q=80" alt="Fotka 4">
+            <div class="blur-overlay">🔒</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="back-btn" onclick="closeBox(1)">Zpět 💖</button>
+  </div>
+
+  <div id="detail-page-2" class="detail-page">
+    <div class="detail-page-content">
+      <div class="detail-card">
+        <h2>📍 Naše místo</h2>
+        <p>Nejdůležitější není místo, kde jsme byli, ale pocit, když jsem s tebou.</p>
+        <p>Každé chvíle s tebou mi připadá jako nejlepší místo na světě.</p>
+        <div class="mini-grid">
+          <div class="mini-item">🫶 Tvoje smích</div>
+          <div class="mini-item">🌙 Noc po noc</div>
+          <div class="mini-item">☕ Kafe a klid</div>
+          <div class="mini-item">💬 Všechny naše řeči</div>
+        </div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="closeBox(2)">Zpět 💖</button>
+  </div>
+
+  <div id="detail-page-3" class="detail-page">
+    <div class="detail-page-content">
+      <div class="detail-card">
+        <h2>😄 Drobnosti</h2>
+        <p>Je to přesně to, co mě drží. Ne monumentální věci, ale ty malé, milé chvilky.</p>
+        <p>Tvůj úsměv, tvoje kecy, tvoje pohledy – všechno to vytvoří ten nejkrásnější pocit.</p>
+        <div class="mini-grid">
+          <div class="mini-item">✨ Tvůj úsměv</div>
+          <div class="mini-item">🎧 Společné chvíle</div>
+          <div class="mini-item">💡 Tvoje nápady</div>
+          <div class="mini-item">🥰 Tvoje přítomnost</div>
+        </div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="closeBox(3)">Zpět 💖</button>
+  </div>
+
+  <div id="detail-page-4" class="detail-page">
+    <div class="detail-page-content">
+      <div class="detail-card">
+        <h2>💌 Slib</h2>
+        <p>Chci, abys věděla: jsem rád, že jsi tady. A jsem rád, že se mohu těšit na všechny naše další dny.</p>
+        <p>Nechci nic jiného než být u tebe, v dobrých i těžkých chvílích, a držet tě blíž než kdokoliv jiný.</p>
+        <div class="mini-grid">
+          <div class="mini-item">💞 Být u tebe</div>
+          <div class="mini-item">🌷 Být vděčný</div>
+          <div class="mini-item">🤝 Mít tě vedle sebe</div>
+          <div class="mini-item">🫶 Dál a dál</div>
+        </div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="closeBox(4)">Zpět 💖</button>
+  </div>
+
+  <div id="detail-page-5" class="detail-page">
+    <div class="detail-page-content">
+      <div class="detail-card">
+        <h2>💖 Poslední věc</h2>
+        <p>Jsi pro mě víc než jen někdo důležitý. Jsi ten člověk, na jehož přítomnost se těším, i když je to jen krátká chvíle.</p>
+        <p>Děkuju za to, že jsi tu. A ještě jednou: jsem na tebe hrdý a jsem za tebe vděčný.</p>
+        <div class="mini-grid">
+          <div class="mini-item">💌 Děkuju</div>
+          <div class="mini-item">❤️ Jsi výjimečná</div>
+          <div class="mini-item">🌟 Tvá přítomnost</div>
+          <div class="mini-item">🔥 Budoucnost s tebou</div>
+        </div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="closeBox(5)">Zpět 💖</button>
+  </div>
+
+  <script>
+    const HESLO = "8.2.2026";
+    const INTERMISSION_TEXT = "Hezkyy, já věděl, že to dáš. 😉";
+
+    function unlock() {
+      const input = document.getElementById("password").value;
+      const error = document.getElementById("error");
+      const loginCard = document.getElementById("login");
+      const intermission = document.getElementById("intermission");
+      const typedTextSpan = document.getElementById("typed-text");
+      const pageCard = document.getElementById("page");
+
+      if (input === HESLO) {
+        loginCard.classList.add("fade-out");
+        setTimeout(() => {
+          loginCard.style.display = "none";
+          intermission.style.display = "block";
+          intermission.classList.add("fade-in");
+
+          let index = 0;
+          const typeInterval = setInterval(() => {
+            if (index < INTERMISSION_TEXT.length) {
+              typedTextSpan.textContent += INTERMISSION_TEXT.charAt(index);
+              index++;
+            } else {
+              clearInterval(typeInterval);
+
+              setTimeout(() => {
+                intermission.classList.remove("fade-in");
+                intermission.classList.add("fade-out");
+
+                setTimeout(() => {
+                  intermission.style.display = "none";
+                  pageCard.style.display = "block";
+                  pageCard.classList.add("fade-in");
+                }, 600);
+              }, 2000);
+            }
+          }, 70);
+        }, 500);
+      } else {
+        error.textContent = "Nic se neděje, pokusů máš nekonečno.";
+      }
+    }
+
+    function openBox(boxNumber) {
+      const page = document.getElementById("page");
+      const target = document.getElementById("detail-page-" + boxNumber);
+
+      if (target) {
+        page.classList.add("fade-out");
+        setTimeout(() => {
+          page.style.display = "none";
+          target.style.display = "block";
+          target.classList.remove("fade-out");
+          target.classList.add("fade-in");
+        }, 500);
+      }
+    }
+
+    function closeBox(boxNumber) {
+      const page = document.getElementById("page");
+      const target = document.getElementById("detail-page-" + boxNumber);
+
+      if (target) {
+        target.classList.add("fade-out");
+        setTimeout(() => {
+          target.style.display = "none";
+          page.style.display = "block";
+          page.classList.remove("fade-out");
+          page.classList.add("fade-in");
+        }, 500);
+      }
+    }
+
+    function revealPhoto(element) {
+      element.classList.add("revealed");
+    }
+
+    document.getElementById("password").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") unlock();
+    });
+  </script>
+</body>
+</html>
